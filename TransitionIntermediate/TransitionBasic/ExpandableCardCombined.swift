@@ -70,7 +70,6 @@ struct CardView: View {
             }
             .font(.title)
             .fontWeight(.semibold)
-            .padding(.bottom, 10)
             if isExpanded {
                 Divider()
                     .foregroundStyle(.black.opacity(0.8))
