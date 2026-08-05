@@ -15,9 +15,7 @@ struct CardInfo: Identifiable {
 }
 
 struct ExpandableCardCombined: View {
-	
-	@State private var isExpanded: Bool = false
-	@State private var selectedCard: CardInfo?
+    
 	let cards: [CardInfo] = [
 		CardInfo(
 			title: "나의 카드",
@@ -35,19 +33,11 @@ struct ExpandableCardCombined: View {
 	
     var body: some View {
 		ScrollView {
-			ForEach(cards) { card in
+            ForEach(cards, id: \.id) { card in
 				VStack(spacing: 10) {
-					headerView(card: card)
-					if isExpanded {
-						Rectangle()
-							.fill(Color.gray)
-							.frame(height: 2)
-						if let cardSelected = selectedCard {
-							detailView(card: cardSelected)
-						}
-					}
+                    CardView(card: card)
+                        .padding()
 				}
-				.padding(20)
 				.background(
 					RoundedRectangle(cornerRadius: 20)
 						.fill(.white)
@@ -57,36 +47,58 @@ struct ExpandableCardCombined: View {
 			}
 		}
     }
-	
-	private func headerView(card: CardInfo) -> some View {
-		HStack {
-			Text(card.title)
-			Spacer()
-			
-			Image(systemName: "chevron.up")
-				.rotationEffect(.degrees(isExpanded ? 180 : 0))
-				.buttonStyle(.plain)
-				.onTapGesture {
-					withAnimation(
-						.spring(response: 0.4, dampingFraction: 0.6)) {
-							selectedCard = card
-							isExpanded.toggle()
-						}
-				}
-		}
-		.font(.title)
-		.fontWeight(.semibold)
-	}
-	
-	private func detailView() -> some View {
-		Text(card.description)
-			.font(.title3)
-			.fontWeight(.ultraLight)
-			.transition(
-				.scale(scale: 0.2, anchor: .top)
-				.combined(with: .opacity)
-			)
-	}
+}
+
+struct CardView: View {
+    @State private var isExpanded: Bool = false
+    let card: CardInfo
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text(card.title)
+                Spacer()
+                
+                Image(systemName: "chevron.up")
+                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                    .onTapGesture {
+                        withAnimation(
+                            .spring(response: 0.4, dampingFraction: 0.6)) {
+                                isExpanded.toggle()
+                            }
+                    }
+            }
+            .font(.title)
+            .fontWeight(.semibold)
+            .padding(.bottom, 10)
+            if isExpanded {
+                Divider()
+                    .foregroundStyle(.black.opacity(0.8))
+                    .frame(height: 2)
+                    .transition(
+                        .scale(scale: 0.2, anchor: .top)
+                        .combined(with: .opacity)
+                    )
+                DetailView(card: card)
+            }
+        }
+    }
+}
+
+struct DetailView: View {
+    let card: CardInfo
+    
+    var body: some View {
+        
+        Text(card.description)
+            .font(.title3)
+            .fontWeight(.ultraLight)
+            .transition(
+                .scale(scale: 0.2, anchor: .top)
+                .combined(with: .opacity)
+            )
+            .padding(.top, 10)
+    }
 }
 
 #Preview {
