@@ -76,22 +76,23 @@ final class StepManager {
 	var totalSteps: Int {
 		return steps.count
 	}
-	
+	/// 페이지 진행 상황
 	var progress: Double {
 		Double(currentStep) / Double(totalSteps)
 	}
 
 	// 3. method
+    /// 앞으로 이동
 	func goToForwardStep() {
 		guard currentStep > 0 && currentStep < totalSteps else {return}
 		goToStep(target: currentStep + 1)
 	}
-	
+	/// 뒤로 이동
 	func goToBackwardStep() {
 		guard currentStep > 1 && currentStep <= totalSteps else {return}
 		goToStep(target: currentStep - 1)
 	}
-	
+	/// 이동 기본 메서드
 	func goToStep(target: Int) {
 		isForward = currentStep < target
 		currentStep = target
