@@ -61,7 +61,9 @@ final class StepManager {
 	/// 현재 페이지의 단계 번호
 	var currentStep: Int = 1
 	/// 다음 페이지가 앞방향이냐 뒷방향이냐
-	var isForward: Bool = false
+	var isForward: Bool = true
+	/// 온보딩페이지가 완료되었나? == 메인 화면이 나올 차례냐
+	var isCompleted: Bool = false
 	
 	// 2. computed properties
 	/// 현재 페이지가 첫 페이지 이냐? - 이 경우 이전 버튼이 안나타남
@@ -100,16 +102,44 @@ final class StepManager {
 	
 }
 
+// MARK: - Main Control View
 struct OnboardingIntermediate: View {
 	
 	@State private var manager: StepManager = StepManager()
 	
     var body: some View {
-        
+		if manager.isCompleted {
+			MainPageView(manager: $manager)
+		}
     }
 }
 
+// MARK: - OnboardingPageComponent
+struct PageComponent: View {
+	
+	// main Control View에서 받아오는 현재 페이지 정보 -> 이것을 변동시키면 다 변하므로 그런데 manager는 binding을 해야 할 듯
+	//TODO: 속성과 뷰 작성
+	let currentPage: Int
+	
+	var body: some View {
+		
+		VStack(spacing: 10) {
+			// MARK: - Header
+			
+			// MARK: - Current Content
+			
+			// MARK: - Navigation
+		}
+	}
+	
+	
+	
+}
+
+// MARK: - MainView of App
 struct MainPageView: View {
+	
+	@Binding var manager: StepManager
 	
 	var body: some View {
 		Spacer()
@@ -124,7 +154,9 @@ struct MainPageView: View {
 		PurpleButton(
 			title: "다시 시작하기",
 			action: {
-				
+				manager.currentStep = 1
+				manager.isForward = true
+				manager.isCompleted = false
 			}
 		)
 	}
@@ -134,6 +166,3 @@ struct MainPageView: View {
     OnboardingIntermediate()
 }
 
-#Preview("MainPageView") {
-	MainPageView()
-}
