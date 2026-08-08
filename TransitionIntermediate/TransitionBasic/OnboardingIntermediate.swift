@@ -52,7 +52,7 @@ final class StepManager {
 			title: "Happiness",
 			subtitle: "Expect better Tomorrow",
 			description: "Family-oriented app leads your life to be prosperous",
-			buttonName: "메인 화면으로",
+			buttonName: "시작하기",
 			accentColor: .orange
 		)
 	]
@@ -82,7 +82,43 @@ final class StepManager {
 	var progress: Double {
 		Double(currentStep) / Double(totalSteps)
 	}
+	
+	var mainPageTransition: AnyTransition {
+		if isCompleted {
+			return AnyTransition.asymmetric(
+				insertion: .scale(scale: 0.4, anchor: .trailing)
+					.combined(with: .opacity),
+				removal: .scale(scale: 0.4, anchor: .leading)
+					.combined(with: .opacity),
+			)
+		} else {
+			return AnyTransition.asymmetric(
+				insertion: .scale(scale: 0.4, anchor: .leading)
+					.combined(with: .opacity),
+				removal: .scale(scale: 0.4, anchor: .trailing)
+					.combined(with: .opacity),
+			)
+		}
+	}
 
+	var onboardingPageTransition: AnyTransition {
+		if isForward {
+			return AnyTransition.asymmetric(
+				insertion: .move(edge: .trailing)
+					.combined(with: .opacity),
+				removal: .move(edge: .leading)
+					.combined(with: .opacity)
+			)
+		} else {
+			return AnyTransition.asymmetric(
+				insertion: .move(edge: .leading)
+					.combined(with: .opacity),
+				removal: .move(edge: .trailing)
+					.combined(with: .opacity)
+			)
+		}
+	}
+	
 	// 3. method
     /// 앞으로 이동
 	func goToForwardStep() {
@@ -95,7 +131,7 @@ final class StepManager {
 		goToStep(target: currentStep - 1)
 	}
 	/// 이동 기본 메서드
-	func goToStep(target: Int) {
+	private func goToStep(target: Int) {
 		isForward = currentStep < target
 		currentStep = target
 	}
@@ -109,26 +145,171 @@ struct OnboardingIntermediate: View {
 	
     var body: some View {
 		if manager.isCompleted {
-			MainPageView(manager: $manager)
-		}
+			MainPageView(manager: manager)
+				.transition(manager.mainPageTransition)
+		} else {
+			OnboardingPageView(manager: manager)
+				.transition(manager.mainPageTransition)
+		} //:CONDITION
     }
+}
+
+// MARK: - OnboardingPageView
+struct OnboardingPageView: View {
+	var manager: StepManager
+	
+	var body: some View {
+		VStack(spacing: 5) {
+			// MARK: - Header
+			VStack(spacing: 10) {
+				// 진행상황 - 건너뛰기
+				HStack {
+					Text("\(manager.currentStep) / \(manager.totalSteps)")
+					Spacer()
+					if !manager.isLastStep {
+						Button("건너뛰기") {
+							withAnimation(.easeInOut(duration: 1)) {
+								manager.isCompleted = true
+							}
+						}
+					}//:CONDITIONAL
+				} //:HSTACK
+				.font(.title3)
+				.fontWeight(.semibold)
+				
+				// 진행바
+				RoundedRectangle(cornerRadius: 5)
+					.fill(Color.gray.opacity(0.3))
+					.frame(height: 10)
+					.overlay {
+						GeometryReader { geo in
+							RoundedRectangle(cornerRadius: 5)
+								.fill(Color.green)
+								.frame(
+									width: geo.size.width * manager.progress,
+									height: 10
+								)
+								.animation(.easeInOut(duration: 1), value: manager.progress)
+						} //:GEOMETRY
+					} //:OVERLAY
+			} //:VSTACK
+			.padding(.horizontal)
+			.frame(height: 70)
+			
+			// MARK: - Current Content
+			Spacer()
+			switch manager.currentStep {
+			case 1:
+				PageComponent(step: manager.steps[0])
+					.transition(manager.onboardingPageTransition)
+			case 2:
+				PageComponent(step: manager.steps[1])
+					.transition(manager.onboardingPageTransition)
+			case 3:
+				PageComponent(step: manager.steps[2])
+					.transition(manager.onboardingPageTransition)
+			case 4:
+				PageComponent(step: manager.steps[3])
+					.transition(manager.onboardingPageTransition)
+			default: EmptyView()
+			}
+			
+			Spacer()
+			
+			// MARK: - Navigation
+			VStack(spacing: 10) {
+				
+				PurpleButton(
+					title: manager.steps[manager.currentStep - 1].buttonName,
+					action: {
+						withAnimation(.easeInOut(duration: 1)) {
+							if manager.isLastStep {
+								manager.isCompleted = true
+							} else {
+								manager.goToForwardStep()
+							}
+						}
+					}
+				)
+				
+				HStack {
+					if !manager.isFirstStep {
+						Button("이전") {
+							withAnimation(.easeInOut(duration: 1)) {
+								manager.goToBackwardStep()
+							}
+						}
+					} else {
+						Button("이전") { }
+							.foregroundStyle(.white)
+					}//:CONDITIONAL
+					
+					Spacer()
+					
+					HStack(spacing: 15) {
+						ForEach(Array(manager.steps.enumerated()), id: \.element.id) {
+							index,
+							step in
+							Circle()
+								.fill(manager.currentStep == index + 1
+									  ? Color.pink.opacity(0.7)
+									  : Color.gray.opacity(0.5))
+								.frame(width: 15, height: 15)
+								.scaleEffect(manager.currentStep == index + 1 ? 1.5 : 1.0)
+								.animation(.easeInOut(duration: 1), value: manager.currentStep)
+						} //:LOOP
+					} //:HSTACK
+					
+					Spacer()
+					
+					if !manager.isLastStep {
+						Button("다음") {
+							withAnimation(.easeInOut(duration: 1)) {
+								manager.goToForwardStep()
+							}
+						}
+					} else {
+						Button("다음") { }
+							.foregroundStyle(.white)
+					}//:CONDITIONAL
+				} //:HSTACK
+				.font(.title3)
+				.fontWeight(.black)
+				.foregroundStyle(.black.opacity(0.7))
+				.padding(.horizontal, 25)
+			} //:VSTACK
+		} //:VSTACK
+	}
 }
 
 // MARK: - OnboardingPageComponent
 struct PageComponent: View {
-	
-	// main Control View에서 받아오는 현재 페이지 정보 -> 이것을 변동시키면 다 변하므로 그런데 manager는 binding을 해야 할 듯
 	//TODO: 속성과 뷰 작성
-	let currentPage: Int
-	
+	// main Control View에서 받아오는 현재 페이지 정보 -> 이것을 변동시키면 다 변하므로 그런데 manager는 binding을 해야 할 듯
+	let step: OnboardingStep
 	var body: some View {
 		
-		VStack(spacing: 10) {
-			// MARK: - Header
-			
-			// MARK: - Current Content
-			
-			// MARK: - Navigation
+		VStack(alignment: .center, spacing: 40) {
+			Circle()
+				.fill(Color.red.opacity(0.3))
+				.frame(width: 160, height: 160)
+				.overlay(alignment: .center) {
+					Image(systemName: step.iconName)
+						.font(.system(size: 80))
+						.foregroundStyle(step.accentColor)
+				}
+			VStack(spacing: 10) {
+				Text(step.title)
+					.font(.title2)
+					.fontWeight(.bold)
+				Text(step.subtitle)
+					.font(.headline)
+					.fontWeight(.medium)
+				Text(step.description)
+					.font(.subheadline)
+					.fontWeight(.ultraLight)
+			}
+			.frame(width: 250)
 		}
 	}
 	
@@ -139,26 +320,30 @@ struct PageComponent: View {
 // MARK: - MainView of App
 struct MainPageView: View {
 	
-	@Binding var manager: StepManager
+	var manager: StepManager
 	
 	var body: some View {
-		Spacer()
-		VStack(spacing: 40) {
-			Image(systemName: "hands.and.sparkles.fill")
-				.font(.system(size: 80))
-				.foregroundStyle(.purple)
-			Text("축하합니다.")
-				.font(.largeTitle)
-		}
-		Spacer()
-		PurpleButton(
-			title: "다시 시작하기",
-			action: {
-				manager.currentStep = 1
-				manager.isForward = true
-				manager.isCompleted = false
+		VStack(spacing: 10) {
+			Spacer()
+			VStack(spacing: 40) {
+				Image(systemName: "hands.and.sparkles.fill")
+					.font(.system(size: 80))
+					.foregroundStyle(.purple)
+				Text("축하합니다.")
+					.font(.largeTitle)
 			}
-		)
+			Spacer()
+			PurpleButton(
+				title: "다시 시작하기",
+				action: {
+					withAnimation(.easeInOut(duration: 1)) {
+						manager.currentStep = 1
+						manager.isForward = true
+						manager.isCompleted = false
+					}
+				}
+			)
+		} //:VSTACK
 	}
 }
 
