@@ -18,7 +18,8 @@ struct TodoItem: Identifiable {
 @Observable
 final class TodoManager {
 	var todoItems: [TodoItem] = []
-	var timers: [UUID : Timer] = [:]
+	var isDoneTimers: [UUID : Timer] = [:]
+	var stampTimers: [UUID : Timer] = [:]
 	let initialItems: [TodoItem] = [
 		TodoItem(title: "우유 사기"),
 		TodoItem(title: "운동 하기"),
@@ -37,10 +38,23 @@ struct CheckListStampView: View {
 	
     var body: some View {
 		NavigationStack {
-			ScrollView {
+			VStack {
 				ForEach(manager.todoItems, id: \.id) { item in
-					TodoBoxView(manager: manager, item: item)
+					if item.isStampVisible {
+						VStack(alignment: .leading) {
+							Text("완료됨")
+								.font(.largeTitle)
+								.fontWeight(.bold)
+								.foregroundStyle(Color.pink)
+								.padding(.horizontal, 50)
+						}
+						.transition(.overShootScale)
+						.frame(maxWidth: .infinity, alignment: .leading)
+					} else {
+						TodoBoxView(manager: manager, item: item)
+					}
 				}
+				Spacer()
 			}
 			.navigationTitle("할 일 목록")
 			.padding(.vertical, 30)
@@ -74,17 +88,32 @@ struct TodoBoxView: View {
 			)
 		)
 		.onTapGesture {
-			shakeAngle = 2
-			if let index = manager.todoItems.firstIndex(where: { $0.id == item.id }) {
-				manager.todoItems[index].isDone.toggle()
+			shakeAngle = 4
+			
+			withAnimation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0.5)) {
+				if let index = manager.todoItems.firstIndex(where: { $0.id == item.id }) {
+					manager.todoItems[index].isDone.toggle()
+				}
 			}
 			
-			manager.timers[item.id] = Timer.scheduledTimer(
+			manager.isDoneTimers[item.id] = Timer.scheduledTimer(
 				withTimeInterval: 1.0,
 				repeats: false,
 				block: { _ in
 					withAnimation(.easeInOut(duration: 0.5)) {
 						manager.todoItems.removeAll(where: { $0.id == item.id })
+					}
+				}
+			)
+			
+			manager.stampTimers[item.id] = Timer.scheduledTimer(
+				withTimeInterval: 0.5,
+				repeats: false,
+				block: { _ in
+					withAnimation(.spring(response: 0.15, dampingFraction: 0.9)) {
+						if let index = manager.todoItems.firstIndex(where: { $0.id == item.id }) {
+							manager.todoItems[index].isStampVisible.toggle()
+						}
 					}
 				}
 			)
@@ -96,24 +125,45 @@ struct TodoBoxView: View {
 }
 
 // MARK: - Transition ViewModifier
-struct rotateBlurScaleFadeModifier: ViewModifier {
+struct RotateBlurScaleFadeModifier: ViewModifier {
 	let hasActivated: Bool
 	
 	func body(content: Content) -> some View {
 		content
-			.rotationEffect(.degrees(hasActivated ? 15 : 0))
-			.blur(radius: hasActivated ? 10 : 0)
+			.rotationEffect(.degrees(hasActivated ? 15 : 0), anchor: .leading)
 			.scaleEffect(hasActivated ? 0.5 : 1.0)
+			.blur(radius: hasActivated ? 10 : 0)
 			.opacity(hasActivated ? 0.0 : 1.0)
 	}
 }
+
+struct OvershootScaleModifier: ViewModifier {
+	let isActive: Bool
+	
+	func body(content: Content) -> some View {
+		content
+			.offset(y: isActive ? -5 : 0)
+			.scaleEffect(isActive ? 1.03 : 1.0)
+			.opacity(isActive ? 0.0 : 1.0)
+	}
+}
+
 
 // MARK: - Custom Transition 적용
 extension AnyTransition {
 	static var rotateBlurScaleFade: AnyTransition {
 		AnyTransition.modifier(
-			active: rotateBlurScaleFadeModifier(hasActivated: true),
-			identity: rotateBlurScaleFadeModifier(hasActivated: false)
+			active: RotateBlurScaleFadeModifier(hasActivated: true),
+			identity: RotateBlurScaleFadeModifier(hasActivated: false)
+		)
+	}
+}
+
+extension AnyTransition {
+	static var overShootScale: AnyTransition {
+		AnyTransition.modifier(
+			active: OvershootScaleModifier(isActive: true),
+			identity: OvershootScaleModifier(isActive: false)
 		)
 	}
 }
