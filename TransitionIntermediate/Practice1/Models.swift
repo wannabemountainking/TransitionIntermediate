@@ -16,7 +16,7 @@ struct Article: Identifiable {
 }
 
 struct BookmarkItem: Identifiable {
-	let id = UUID()
+	var id: UUID { article.id }
 	let article: Article
 	var hasRead: Bool = false
 }

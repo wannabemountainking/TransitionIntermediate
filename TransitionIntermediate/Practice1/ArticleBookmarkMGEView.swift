@@ -35,9 +35,23 @@ struct ArticleBookmarkMGEView: View {
 								ArticleCardView(
 									article: article,
 									namespace: articleNamespace,
-									onCardAction: { article in
+									hasBookmarked: bookmarks.contains(where: { $0.id == article.id }),
+									onCardAction: { action in
 										// MARK: - 아티클 카드를 누르면 생기는 메서드
 										// 조건부 렌더링: 별표시를 누르면 bookmarks에 추가(이미 있으면 생략), isBookmarked.toggle() 변경
+										withAnimation(
+											.spring(
+												response: 0.5,
+												dampingFraction: 0.8
+											)
+										) {
+											switch action {
+											case .add(let article):
+												addToBookmarks(article: article)
+											case .remove(let article):
+												removeArticleFromBookmarks(article: article)
+											}
+										}
 									}
 								)
 							}
@@ -50,11 +64,22 @@ struct ArticleBookmarkMGEView: View {
 			
 		} //:ZSTACK
     }
-    
-    private func isArticleBookmarked(article: Article) -> Bool {
-        bookmarks.contains(where: { $0.article.id == article.id })
-    }
 	
+	private func articleToBookmarkItem(article: Article) -> BookmarkItem {
+		return BookmarkItem(article: article, hasRead: false)
+	}
+	
+	private func addToBookmarks(article: Article) {
+		let item = articleToBookmarkItem(article: article)
+		bookmarks.append(item)
+	}
+	
+	private func removeArticleFromBookmarks(article: Article) {
+		if let index = bookmarks.firstIndex(where: { $0.id == article.id }) {
+			bookmarks.remove(at: index)
+		}
+	}
+    	
 	// MARK: - HeaderView Component
 	private var ArticleHeaderView: some View {
 		HStack {
@@ -82,11 +107,40 @@ struct ArticleBookmarkMGEView: View {
 		.padding(.horizontal, 20)
 		.padding(.vertical)
 	}
+}
+
+struct BookmarkListView: View {
 	
+	let onBookmarkAction: ()
 	
+	var body: some View {
+		VStack(spacing: 15) {
+			headerView
+			
+		} //:VSTACK
+	}
 	
+	private var headerView: some View {
+		HStack(spacing: 20) {
+			Button {
+				// Action
+				
+			} label: {
+				Text("← Article Feeds")
+					.foregroundStyle(.black.opacity(0.7))
+			}
+		} //:HSTACK
+		.font(.system(size: 25))
+		.fontWeight(.semibold)
+		.padding(.horizontal, 20)
+		.padding(.vertical)
+	}
 }
 
 #Preview {
     ArticleBookmarkMGEView()
+}
+
+#Preview("북마크목록뷰") {
+	BookmarkListView()
 }

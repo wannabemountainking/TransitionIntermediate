@@ -18,18 +18,24 @@ struct ComponentsViews: View {
 				readingMinutes: 6,
 				icon: "swift"
 				),
-			namespace: namespace
-			onCardAction: { article in }
+			namespace: namespace,
+			hasBookmarked: true,
+			onCardAction: { _ in }
 		)
     }
 }
 
 struct ArticleCardView: View {
-	
-	@State private var hasBookmarked: Bool = false
+
 	let article: Article
 	let namespace: Namespace.ID
-	let onCardAction: (Article) -> Void
+	let hasBookmarked: Bool
+	let onCardAction: (BookmarkAction) -> Void
+	
+	enum BookmarkAction {
+		case add(article: Article)
+		case remove(article: Article)
+	}
 	
 	var body: some View {
 		
@@ -38,11 +44,13 @@ struct ArticleCardView: View {
 			Image(systemName: article.icon)
 				.font(.title2)
 				.foregroundStyle(.orange)
+				.matchedGeometryEffect(id: "\(article.id)Icon", in: namespace)
 			// 기사 제목
 			HStack(spacing: 10) {
 				Text("제목  \(article.title)")
 					.foregroundStyle(.secondary)
 					.lineLimit(5)
+					.matchedGeometryEffect(id: "\(article.id)Title", in: namespace)
 			} //:HSTACK
 			.font(.subheadline)
 			.fontWeight(.semibold)
@@ -57,16 +65,24 @@ struct ArticleCardView: View {
 			HStack {
 				Spacer()
 				Image(systemName: hasBookmarked ? "star.fill" : "star")
-					.font(.headline)
+					.font(.title2)
 					.foregroundStyle(.yellow)
+					.frame(maxWidth: .infinity)
+					.contentShape(Rectangle())
 					.onTapGesture {
-						onCardAction(article)
+						if hasBookmarked {
+							onCardAction(.remove(article: article))
+						} else {
+							onCardAction(.add(article: article))
+						}
+						
 					}
 				Spacer()
 			}
 			
 		} //:VSTACK
 		.frame(maxWidth: 130)
+		.matchedGeometryEffect(id: "\(article.id)Background", in: namespace)
 	}
 }
 
