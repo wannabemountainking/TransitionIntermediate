@@ -10,7 +10,7 @@ import SwiftUI
 struct ArticleBookmarkMGEView: View {
 	// properties
 	@State private var bookmarkItems: [BookmarkItem] = []
-	
+	@Namespace private var articleNamespace
 	let articles: [Article] = Articles.articles
 	
     var body: some View {
@@ -33,8 +33,8 @@ struct ArticleBookmarkMGEView: View {
 							ForEach(articles) { article in
 								ArticleCardView(
 									article: article,
-									isBookmarked: <#T##Bool#>
-									onCardAction: { _ in
+									namespace: articleNamespace,
+									onCardAction: { article in
 										// MARK: - 아티클 카드를 누르면 생기는 메서드
 										// 조건부 렌더링: 별표시를 누르면 bookmarkItems에 추가(이미 있으면 생략), isBookmarked.toggle() 변경
 									}
@@ -77,6 +77,8 @@ struct ArticleBookmarkMGEView: View {
 		.padding(.horizontal, 20)
 		.padding(.vertical)
 	}
+	
+	
 	
 }
 

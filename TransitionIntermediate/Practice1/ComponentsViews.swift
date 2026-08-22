@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ComponentsViews: View {
+	let namespace: Namespace.ID
+	
     var body: some View {
 		ArticleCardView(
 			article: Article(
@@ -16,16 +18,17 @@ struct ComponentsViews: View {
 				readingMinutes: 6,
 				icon: "swift"
 				),
-			isBookmarked: true,
-			onCardAction: {_ in }
+			namespace: namespace
+			onCardAction: { article in }
 		)
     }
 }
 
 struct ArticleCardView: View {
 	
+	@State private var hasBookmarked: Bool = false
 	let article: Article
-	let isBookmarked: Bool
+	let namespace: Namespace.ID
 	let onCardAction: (Article) -> Void
 	
 	var body: some View {
@@ -53,7 +56,13 @@ struct ArticleCardView: View {
 			
 			HStack {
 				Spacer()
-				Image(systemName: )
+				Image(systemName: hasBookmarked ? "star.fill" : "star")
+					.font(.headline)
+					.foregroundStyle(.yellow)
+					.onTapGesture {
+						onCardAction(article)
+					}
+				Spacer()
 			}
 			
 		} //:VSTACK
@@ -62,5 +71,6 @@ struct ArticleCardView: View {
 }
 
 #Preview {
-    ComponentsViews()
+	@Previewable @Namespace var namespace
+    ComponentsViews(namespace: namespace)
 }
