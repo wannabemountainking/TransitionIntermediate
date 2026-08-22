@@ -9,7 +9,8 @@ import SwiftUI
 
 struct ArticleBookmarkMGEView: View {
 	// properties
-	@State private var bookmarkItems: [BookmarkItem] = []
+	@State private var bookmarks: [BookmarkItem] = []
+    @State private var showingBookmarks: Bool = false
 	@Namespace private var articleNamespace
 	let articles: [Article] = Articles.articles
 	
@@ -36,7 +37,7 @@ struct ArticleBookmarkMGEView: View {
 									namespace: articleNamespace,
 									onCardAction: { article in
 										// MARK: - 아티클 카드를 누르면 생기는 메서드
-										// 조건부 렌더링: 별표시를 누르면 bookmarkItems에 추가(이미 있으면 생략), isBookmarked.toggle() 변경
+										// 조건부 렌더링: 별표시를 누르면 bookmarks에 추가(이미 있으면 생략), isBookmarked.toggle() 변경
 									}
 								)
 							}
@@ -49,6 +50,10 @@ struct ArticleBookmarkMGEView: View {
 			
 		} //:ZSTACK
     }
+    
+    private func isArticleBookmarked(article: Article) -> Bool {
+        bookmarks.contains(where: { $0.article.id == article.id })
+    }
 	
 	// MARK: - HeaderView Component
 	private var ArticleHeaderView: some View {
@@ -59,7 +64,7 @@ struct ArticleBookmarkMGEView: View {
 				.frame(width: 40, height: 40)
 				.foregroundStyle(.mint)
 				.overlay {
-					Text("\(bookmarkItems.count)")
+					Text("\(bookmarks.count)")
 						.font(.system(size: 24))
 						.foregroundStyle(.white)
 						.offset(x: 15, y: -15)
