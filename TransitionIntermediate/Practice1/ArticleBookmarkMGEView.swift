@@ -10,63 +10,88 @@ import SwiftUI
 struct ArticleBookmarkMGEView: View {
 	// properties
 	@State private var bookmarks: [BookmarkItem] = []
-    @State private var showingBookmarks: Bool = false
+    @State private var showingBookmarksList: Bool = false
 	@Namespace private var articleNamespace
 	let articles: [Article] = Articles.articles
 	
     var body: some View {
-        // 토스트를 위해 ZStack 사용
-		ZStack {
-			VStack(spacing: 15) {
-				// Header 뷰
-				ArticleHeaderView
-				Divider()
-				
-				// articles 뷰
-				ScrollView {
-					LazyVGrid(
-						columns: [
-							GridItem(.flexible()),
-							GridItem(.flexible())
-						],
-						spacing: 10,
-						content: {
-							ForEach(articles) { article in
-								ArticleCardView(
-									article: article,
-									namespace: articleNamespace,
-									hasBookmarked: bookmarks.contains(where: { $0.id == article.id }),
-									onCardAction: { action in
-										// MARK: - 아티클 카드를 누르면 생기는 메서드
-										// 조건부 렌더링: 별표시를 누르면 bookmarks에 추가(이미 있으면 생략), isBookmarked.toggle() 변경
-										withAnimation(
-											.spring(
-												response: 0.5,
-												dampingFraction: 0.8
-											)
-										) {
-											switch action {
-											case .add(let article):
-												addToBookmarks(article: article)
-											case .remove(let article):
-												removeArticleFromBookmarks(article: article)
+		if !showingBookmarksList {
+			// 토스트를 위해 ZStack 사용
+			ZStack {
+				VStack(spacing: 15) {
+					// Header 뷰
+					ArticleHeaderView
+					Divider()
+					
+					// articles 뷰
+					ScrollView {
+						LazyVGrid(
+							columns: [
+								GridItem(.flexible()),
+								GridItem(.flexible())
+							],
+							spacing: 10,
+							content: {
+								ForEach(articles) { article in
+									ArticleCardView(
+										article: article,
+										namespace: articleNamespace,
+										hasBookmarked: bookmarks.contains(where: { $0.id == article.id }),
+										onCardAction: { action in
+											// MARK: - 아티클 카드를 누르면 생기는 메서드
+											// 조건부 렌더링: 별표시를 누르면 bookmarks에 추가(이미 있으면 생략), isBookmarked.toggle() 변경
+											withAnimation(
+												.spring(
+													response: 0.5,
+													dampingFraction: 0.8
+												)
+											) {
+												switch action {
+												case .add(let article):
+													addToBookmarks(article: article)
+												case .remove(let article):
+													removeArticleFromBookmarks(article: article)
+												}
 											}
 										}
-									}
-								)
+									)
+								}
 							}
-						}
-					)
+						)
+					}
+					
+					Spacer()
+				} //:VSTACK
+			} //:ZSTACK
+		} else {
+			BookmarkListView(
+				bookmarks: bookmarks,
+				namespace: articleNamespace,
+				onListAction: { item, action in
+					switch action {
+					case .remove:
+						removeItemFromBookmarks(item: item)
+					case .toggleRead:
+						toggleRead(item: item)
+					}
+				},
+				onDismiss: {
+					withAnimation(.spring(response: 0.6, dampingFraction: 0.9)) {
+						showingBookmarksList.toggle()
+					}
 				}
-				
-				Spacer()
-			} //:VSTACK
-			
-		} //:ZSTACK
+			)
+		}
     }
 	
 	private func articleToBookmarkItem(article: Article) -> BookmarkItem {
 		return BookmarkItem(article: article, hasRead: false)
+	}
+	
+	private func removeItemFromBookmarks(item: BookmarkItem) {
+		if let index = bookmarks.firstIndex(where: { $0.id == item.id }) {
+			bookmarks.remove(at: index)
+		}
 	}
 	
 	private func addToBookmarks(article: Article) {
@@ -77,6 +102,12 @@ struct ArticleBookmarkMGEView: View {
 	private func removeArticleFromBookmarks(article: Article) {
 		if let index = bookmarks.firstIndex(where: { $0.id == article.id }) {
 			bookmarks.remove(at: index)
+		}
+	}
+	
+	private func toggleRead(item: BookmarkItem) {
+		if let index = bookmarks.firstIndex(where: { $0.id == item.id }) {
+			bookmarks[index].hasRead.toggle()
 		}
 	}
     	
@@ -101,6 +132,11 @@ struct ArticleBookmarkMGEView: View {
 								.offset(x: 15, y: -15)
 						)
 				}
+				.onTapGesture {
+					withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+						showingBookmarksList.toggle()
+					}
+				}
 		}
 		.font(.system(size: 40))
 		.fontWeight(.semibold)
@@ -110,13 +146,38 @@ struct ArticleBookmarkMGEView: View {
 }
 
 struct BookmarkListView: View {
-	
-	let onBookmarkAction: ()
+
+	let bookmarks: [BookmarkItem]
+//	let showingBookmarkList: Bool
+	let namespace: Namespace.ID
+	let onListAction: (BookmarkItem, BookmarkRowView.RowAction) -> Void
+	let onDismiss: () -> Void
 	
 	var body: some View {
 		VStack(spacing: 15) {
 			headerView
 			
+			Divider()
+			
+			if bookmarks.isEmpty {
+				
+				EmptyBookmarkView(onDismiss: onDismiss)
+				
+			} else {
+				ScrollView {
+					VStack {
+						ForEach(bookmarks) { item in
+							BookmarkRowView(
+								bookmarkItem: item,
+								namespace: namespace,
+								onRowAction: { action in
+									onListAction(item, action)
+								}
+							)
+						} //:LOOP
+					} //:VSTACK
+				} //:SCROLL
+			} //:CONDITION
 		} //:VSTACK
 	}
 	
@@ -124,13 +185,18 @@ struct BookmarkListView: View {
 		HStack(spacing: 20) {
 			Button {
 				// Action
-				
+				onDismiss()
 			} label: {
 				Text("← Article Feeds")
 					.foregroundStyle(.black.opacity(0.7))
 			}
+			.font(.system(size: 25))
+			
+			Spacer()
+			
+			Text("북마크 목록")
+				.font(.title)
 		} //:HSTACK
-		.font(.system(size: 25))
 		.fontWeight(.semibold)
 		.padding(.horizontal, 20)
 		.padding(.vertical)
@@ -141,6 +207,3 @@ struct BookmarkListView: View {
     ArticleBookmarkMGEView()
 }
 
-#Preview("북마크목록뷰") {
-	BookmarkListView()
-}

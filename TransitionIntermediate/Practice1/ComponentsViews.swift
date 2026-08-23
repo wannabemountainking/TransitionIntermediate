@@ -26,7 +26,7 @@ struct ComponentsViews: View {
 }
 
 struct ArticleCardView: View {
-
+	
 	let article: Article
 	let namespace: Namespace.ID
 	let hasBookmarked: Bool
@@ -86,7 +86,86 @@ struct ArticleCardView: View {
 	}
 }
 
+struct BookmarkRowView: View {
+	var bookmarkItem: BookmarkItem
+	let namespace: Namespace.ID
+	let onRowAction: (RowAction) -> Void
+	
+	enum RowAction {
+		case remove
+		case toggleRead
+	}
+	
+	var body: some View {
+		HStack(spacing: 15) {
+			Image(systemName: bookmarkItem.article.icon)
+				.font(.title3)
+				.foregroundStyle(.orange)
+				.matchedGeometryEffect(id: "\(bookmarkItem.article.id)Icon", in: namespace)
+			
+			Text("제목  \(bookmarkItem.article.title)")
+				.font(.subheadline)
+				.foregroundStyle(.secondary)
+				.lineLimit(3)
+				.matchedGeometryEffect(id: "\(bookmarkItem.article.id)Title", in: namespace)
+			
+			Spacer()
+			
+			HStack {
+				Text(bookmarkItem.hasRead ? "✓ 읽음" : "◯ 안읽음")
+					.foregroundStyle(bookmarkItem.hasRead ? Color.green : .pink.opacity(0.7))
+					.onTapGesture {
+						onRowAction(.toggleRead)
+					}
+				Image(systemName: "trash")
+					.foregroundStyle(.red)
+					.onTapGesture {
+						onRowAction(.remove)
+					}
+			}
+			.font(.headline)
+			.frame(alignment: .center)
+		} //:HSTACK
+		.matchedGeometryEffect(id: "\(bookmarkItem.id)Background", in: namespace)
+		.padding(.horizontal, 20)
+	}
+}
+
+struct EmptyBookmarkView: View {
+	
+	let onDismiss: () -> Void
+	
+	var body: some View {
+		ContentUnavailableView {
+			// Label
+			Label("북마크한 책이 없습니다", systemImage: "cart")
+		} description: {
+			Text("마음에 드는 책을 골라주세요")
+		} actions: {
+			PurpleButton(
+				title: "책 고르기",
+				action: {
+					withAnimation(.spring) {
+						onDismiss()
+					}
+				}
+			)
+		}
+	}
+}
+
 #Preview {
 	@Previewable @Namespace var namespace
     ComponentsViews(namespace: namespace)
+}
+
+#Preview("RowView") {
+	@Previewable @Namespace var namespace
+	let bookmark: BookmarkItem = BookmarkItem(article: Articles.articles[0])
+	
+	BookmarkRowView(
+		bookmarkItem: bookmark,
+		namespace: namespace,
+		onRowAction: {_ in}
+	)
 }
