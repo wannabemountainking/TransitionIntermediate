@@ -16,8 +16,8 @@ final class MusicViewModel {
 	
 	private(set) var tracks: [Track] = []
 	private(set) var isLoading: Bool = false
-	private(set) var isLoadingMore: Bool = false
 	private(set) var errorMessage: String? = nil
+	
 	
 	func search(term: String) async {
 		guard !isLoading else {
@@ -39,9 +39,6 @@ final class MusicViewModel {
 		isLoading = false
 	}
 	
-	func loadMore() async {
-		
-	}
 }
 
 
