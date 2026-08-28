@@ -18,7 +18,6 @@ final class MusicViewModel {
 	private(set) var isLoading: Bool = false
 	private(set) var errorMessage: String? = nil
 	
-	
 	func search(term: String) async {
 		guard !isLoading else {
 			errorMessage = "이미 로딩 중인 프로그램이 있습니다"

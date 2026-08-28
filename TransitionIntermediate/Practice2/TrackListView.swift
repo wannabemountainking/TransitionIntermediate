@@ -8,11 +8,62 @@
 import SwiftUI
 
 struct TrackListView: View {
+	
+	let tracks: [Track]
+	let onTrackSelected: (Track) -> Void
+	
     var body: some View {
-		
+		LazyVStack(alignment: .leading, spacing: 10) {
+			ForEach(tracks, id: \.id) { track in
+				HStack(alignment: .top, spacing: 20) {
+					AsyncImage(url: URL(string: track.artworkURL))
+						.frame(width: 70, height: 70)
+						.clipShape(Circle())
+						.overlay(alignment: .center) {
+							Circle()
+								.fill(Color.black.opacity(0.6))
+								.frame(width: 25, height: 25)
+						}
+					VStack(alignment: .leading, spacing: 5) {
+						Text(track.track)
+							.font(.title2)
+							.fontWeight(.semibold)
+						HStack(spacing: 30) {
+							Text(track.artist)
+								.font(.title3)
+								.fontWeight(.light)
+							Text(track.durationSeconds)
+								.font(.headline)
+								.fontWeight(.ultraLight)
+						} //:HSTACK
+					} //:VSTACK
+					Spacer()
+				} //:HSTACK
+				.frame(maxWidth: .infinity)
+				.padding(.vertical)
+				.padding(.horizontal, 20)
+				.background(
+					RoundedRectangle(cornerRadius: 10)
+						.fill(
+							Color.orange.opacity(0.3)
+						)
+				)
+				.onTapGesture {
+					withAnimation(.spring) {
+						onTrackSelected(track)
+					}
+				}
+				.padding(.vertical, 10)
+			} //:LOOP
+		} //:VSTACK
+		.frame(maxWidth: .infinity)
+		.padding(.horizontal)
     }
 }
 
 #Preview {
-    TrackListView()
+	TrackListView(
+		tracks: MusicService.mockTracks,
+		onTrackSelected: { _ in
+		})
 }

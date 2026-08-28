@@ -27,7 +27,7 @@ struct Track: Identifiable, Decodable {
 	let artworkURL: String
 	let previewURL: String
 	
-	var durationSeconds: Int
+	var durationSeconds: String
 	
 	enum CodingKeys: String, CodingKey {
 		case track = "trackName"
@@ -43,17 +43,20 @@ struct Track: Identifiable, Decodable {
 		
 		self.id = UUID()
 		
-		let millis = try container.decode(Int.self, forKey: .trackTimeMillis)
-		
 		self.track = try container.decode(String.self, forKey: .track)
 		self.artist = try container.decode(String.self, forKey: .artist)
 		self.collection = try container.decode(String.self, forKey: .collection)
 		self.artworkURL = try container.decode(String.self, forKey: .artworkURL)
 		self.previewURL = try container.decode(String.self, forKey: .previewURL)
-		self.durationSeconds = Int(millis / 1000)
+		
+		
+		let millis = try container.decode(Int.self, forKey: .trackTimeMillis)
+		let duration: Duration = Duration.seconds(millis / 1000)
+		let style: Duration.TimeFormatStyle = Duration.TimeFormatStyle(pattern: .minuteSecond(padMinuteToLength: 2, fractionalSecondsLength: 2))
+		self.durationSeconds = duration.formatted(style)
 	}
 	
-	init(track: String, artist: String, collection: String, artworkURL: String, durationSeconds: Int, previewURL: String) {
+	init(track: String, artist: String, collection: String, artworkURL: String, durationSeconds: String, previewURL: String) {
 		self.id = UUID()
 		self.track = track
 		self.artist = artist
@@ -64,5 +67,4 @@ struct Track: Identifiable, Decodable {
 	}
 
 }
-
 

@@ -10,7 +10,6 @@ import SwiftUI
 struct MainView: View {
 	
 	@State private var vm: MusicViewModel = .init()
-	@State private var tracks: [Track] = []
 	@State private var searchText: String = ""
 	@State private var hasResult: Bool? = nil
 	
@@ -46,8 +45,27 @@ struct MainView: View {
 				Divider()
 				
 				ScrollView {
-					<#code#>
-				}
+					VStack(spacing: 10) {
+						if !vm.tracks.isEmpty {
+							// TODO: - 뮤직 데이터 카드 리스트
+							TrackListView(
+								tracks: vm.tracks,
+								onTrackSelected: { track in
+									
+								}
+							)
+						} else if vm.isLoading {
+							ProgressView {
+								Text("데이터 로딩 중...")
+							}
+						} else if vm.tracks.isEmpty {
+							ContentUnavailableView(
+								"검색 결과가 없습니다",
+								systemImage: "music.note.slash"
+							)
+						}
+					} //:VSTACK
+				} //:SCROLL
 			} //:VSTACK
 			
 		} //:ZSTACK

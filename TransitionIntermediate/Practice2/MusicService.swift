@@ -43,7 +43,7 @@ extension MusicService {
 			artist: "Taylor Swift",
 			collection: "The Life of a Showgirl",
 			artworkURL: "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/2d/46/e0/2d46e0bc-8ab9-85dd-4b56-ee6951351034/25UM1IM19577.rgb.jpg/100x100bb.jpg",
-			durationSeconds: 2,
+			durationSeconds: "02:22",
 			previewURL: "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/4b/07/28/4b07285f-b50c-7aff-cb40-2d732256b703/mzaf_16739866530441939982.plus.aac.p.m4a"
 		)
 	]
