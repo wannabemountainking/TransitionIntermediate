@@ -26,7 +26,6 @@ final class MusicService {
 		let searchingTerm = term
 			.trimmingCharacters(in: .symbols)
 			.trimmingCharacters(in: .whitespacesAndNewlines)
-		
 		let url = URL(string: "\(baseURL)?term=\(searchingTerm)&media=music&entity=song&limit=25")!
 		let (data, _) = try await URLSession.shared.data(from: url)
 		let response = try JSONDecoder().decode(ITuneResponse.self, from: data)

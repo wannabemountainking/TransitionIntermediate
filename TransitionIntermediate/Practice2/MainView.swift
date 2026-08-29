@@ -6,70 +6,107 @@
 //
 
 import SwiftUI
+import AVFoundation
 
 struct MainView: View {
 	
+	@Namespace private var iTuneNamespace
+	
 	@State private var vm: MusicViewModel = .init()
 	@State private var searchText: String = ""
-	@State private var hasResult: Bool? = nil
+	@State private var showDetail: Bool = false
+	@State private var debounceTask: Task<Void, Never>?
 	
-    var body: some View {
+	var body: some View {
 		ZStack {
 			LinearGradient(gradient: Gradient(colors: [Color.purple, .green]), startPoint: .topLeading, endPoint: .bottomTrailing)
 				.ignoresSafeArea()
 			
 			// Content
 			VStack(spacing: 10) {
-				HStack(spacing: 10) {
-					Text("검색창:")
-						.font(.title)
-						.fontWeight(.semibold)
-					TextField("", text: $searchText)
-						.font(.title2)
-						.foregroundStyle(.black.opacity(0.9))
-						.textFieldStyle(.roundedBorder)
-					Button {
-						// Action
-						Task {
-							await vm.search(term: searchText)
-						}
-					} label: {
-						Image(systemName: "magnifyingglass")
+				if !showDetail {
+					HStack(spacing: 10) {
+						Text("검색창:")
 							.font(.title)
-							.fontWeight(.bold)
-							.foregroundStyle(Color.blue)
-					}
-				} //:HSTACK
-				.padding(20)
-				
-				Divider()
-				
-				ScrollView {
-					VStack(spacing: 10) {
-						if !vm.tracks.isEmpty {
-							// TODO: - 뮤직 데이터 카드 리스트
-							TrackListView(
-								tracks: vm.tracks,
-								onTrackSelected: { track in
-									
+							.fontWeight(.semibold)
+						TextField("", text: $searchText)
+							.font(.title2)
+							.foregroundStyle(.black.opacity(0.9))
+							.textFieldStyle(.roundedBorder)
+							.onChange(of: searchText) { _, newValue in
+								debounceTask?.cancel()
+								debounceTask = Task {
+									try? await Task.sleep(for: .seconds(0.6))
+									guard !Task.isCancelled else {return}
+									await vm.search(term: newValue)
 								}
-							)
-						} else if vm.isLoading {
-							ProgressView {
-								Text("데이터 로딩 중...")
 							}
-						} else if vm.tracks.isEmpty {
-							ContentUnavailableView(
-								"검색 결과가 없습니다",
-								systemImage: "music.note.slash"
-							)
+						
+						Button {
+							// Action
+							debounceTask?.cancel()
+							Task {
+								await vm.search(term: searchText)
+							}
+						} label: {
+							Image(systemName: "magnifyingglass")
+								.font(.title)
+								.fontWeight(.bold)
+								.foregroundStyle(Color.blue)
 						}
-					} //:VSTACK
-				} //:SCROLL
+					} //:HSTACK
+					.padding(20)
+					
+					Divider()
+					
+					ScrollView {
+						VStack(spacing: 10) {
+							
+							if vm.isLoading {
+								ProgressView {
+									Text("데이터 로딩 중...")
+								}
+							} else {
+								switch vm.hasResult {
+								case nil:
+									ContentUnavailableView("검색어를 입력해 주세요", systemImage: "magnifyingglass")
+								case false:
+									ContentUnavailableView(
+										"검색 결과가 없습니다",
+										systemImage: "music.note.slash"
+									)
+								case true:
+									TrackListView(
+										tracks: vm.tracks,
+										namespace: iTuneNamespace,
+										onTrackSelected: { track in
+											vm.selectedTrack = track
+											withAnimation(.spring) {
+												showDetail = true
+											}
+										}
+									)
+								}//: Switch
+							}//:CONDITIONAL
+						} //:VSTACK
+					} //:SCROLL
+				} else {
+					if let track = vm.selectedTrack {
+						TrackDetailView(
+							track: track,
+							namespace: iTuneNamespace,
+							onDismiss: {
+								withAnimation(.spring) {
+									showDetail = false
+								}
+							}
+						)
+					}
+				}
 			} //:VSTACK
 			
 		} //:ZSTACK
-    }
+	}
 }
 
 #Preview {

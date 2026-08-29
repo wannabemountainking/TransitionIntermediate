@@ -10,6 +10,7 @@ import SwiftUI
 struct TrackListView: View {
 	
 	let tracks: [Track]
+	let namespace: Namespace.ID
 	let onTrackSelected: (Track) -> Void
 	
     var body: some View {
@@ -24,17 +25,22 @@ struct TrackListView: View {
 								.fill(Color.black.opacity(0.6))
 								.frame(width: 25, height: 25)
 						}
+						.matchedGeometryEffect(id: "\(track.id)-image", in: namespace)
+					
 					VStack(alignment: .leading, spacing: 5) {
 						Text(track.track)
 							.font(.title2)
 							.fontWeight(.semibold)
+							.matchedGeometryEffect(id: "\(track.id)-track", in: namespace)
 						HStack(spacing: 30) {
 							Text(track.artist)
 								.font(.title3)
 								.fontWeight(.light)
+								.matchedGeometryEffect(id: "\(track.id)-artist", in: namespace)
 							Text(track.durationSeconds)
 								.font(.headline)
 								.fontWeight(.ultraLight)
+								.matchedGeometryEffect(id: "\(track.id)-runningTime", in: namespace)
 						} //:HSTACK
 					} //:VSTACK
 					Spacer()
@@ -47,6 +53,7 @@ struct TrackListView: View {
 						.fill(
 							Color.orange.opacity(0.3)
 						)
+						.matchedGeometryEffect(id: "\(track.id)-background", in: namespace)
 				)
 				.onTapGesture {
 					withAnimation(.spring) {
@@ -62,8 +69,11 @@ struct TrackListView: View {
 }
 
 #Preview {
+	@Previewable @Namespace var namespace
+	
 	TrackListView(
 		tracks: MusicService.mockTracks,
+		namespace: namespace,
 		onTrackSelected: { _ in
 		})
 }
